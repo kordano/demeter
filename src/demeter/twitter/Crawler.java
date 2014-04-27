@@ -34,6 +34,7 @@ public class Crawler {
 			return new String();
 		}
 	}
+	
 	// Writes a request to a connection
 	private static boolean writeRequest(HttpsURLConnection connection, String textBody) {
 		try {
@@ -46,7 +47,6 @@ public class Crawler {
 		}
 		catch (IOException e) { return false; }
 	}
-		
 		
 	// Reads a response for a given connection and returns it as a string.
 	private static String readResponse(HttpsURLConnection connection) {
@@ -111,8 +111,6 @@ public class Crawler {
 	private static String fetchTimelineTweet(String endPointUrl) throws IOException {
 		HttpsURLConnection connection = null;
 		String bearerToken = requestBearerToken("https://api.twitter.com/oauth2/token");
-		System.out.println(bearerToken);
-
 					
 		try {
 			URL url = new URL(endPointUrl); 
@@ -128,7 +126,10 @@ public class Crawler {
 				
 			// Parse the JSON response into a JSON mapped object to fetch fields from.
 			JSONArray obj = (JSONArray)JSONValue.parse(readResponse(connection));
-			System.out.println(obj.toJSONString());
+			
+			for(int i=0; i<10; i++) {
+				System.out.println(((JSONObject)obj.get(i)).keySet());
+			}
 				
 			if (obj != null) {
 				String tweet = ((JSONObject)obj.get(0)).get("text").toString();
@@ -147,18 +148,15 @@ public class Crawler {
 		}
 	}
 
-
-
 	
 	public static void main(String[] args) {
-		System.out.println("start");
 		String endPointUrl = "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=FAZ_Topnews&count=10";
+		String searchUrl = "https://api.twitter.com/1.1/search/tweets.json?q=%40twitterapi";
+
 		try {
 			System.out.println(fetchTimelineTweet(endPointUrl));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println("end");
 	}
-
 }
