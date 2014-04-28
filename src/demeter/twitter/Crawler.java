@@ -106,9 +106,8 @@ public class Crawler {
 		}
 	}
 	
-	
-	// Fetches the first tweet from a given user's timeline
-	private static String fetchTimelineTweet(String endPointUrl) throws IOException {
+	// Search Twitter for some data
+	private static void searchTwitter(String endPointUrl) throws IOException {
 		HttpsURLConnection connection = null;
 		String bearerToken = requestBearerToken("https://api.twitter.com/oauth2/token");
 					
@@ -123,20 +122,44 @@ public class Crawler {
 			connection.setRequestProperty("Authorization", "bearer " + bearerToken);
 			connection.setUseCaches(false);
 				
+			JSONObject obj = (JSONObject)JSONValue.parse(readResponse(connection));
+			// Parse the JSON response into a JSON mapped object to fetch fields from.
+			JSONArray statuses = (JSONArray)obj.get("statuses");
+			for(Object o : statuses) {
+				JSONObject status = (JSONObject)o;
+				System.out.println(status.get("created_at") + " : " + "@" + ((JSONObject)status.get("user")).get("name") + " -> " + status.get("text"));
+			}
+		}
+		catch (MalformedURLException e) {
+			throw new IOException("Invalid endpoint URL specified.", e);
+		}
+		finally {
+			if (connection != null) {
+				connection.disconnect();
+			}
+		}
+	}
+
+	// Fetches the first tweet from a given user's timeline
+	private static void fetchTimelineTweet(String endPointUrl) throws IOException {
+		HttpsURLConnection connection = null;
+		String bearerToken = requestBearerToken("https://api.twitter.com/oauth2/token");
+					
+		try {
+			URL url = new URL(endPointUrl); 
+			connection = (HttpsURLConnection) url.openConnection();           
+			connection.setDoOutput(true);
+			connection.setDoInput(true); 
+			connection.setRequestMethod("GET"); 
+			connection.setRequestProperty("Host", "api.twitter.com");
+			connection.setRequestProperty("User-Agent", "News-Crawler");
+			connection.setRequestProperty("Authorization", "bearer " + bearerToken);
+			connection.setUseCaches(false);
 				
 			// Parse the JSON response into a JSON mapped object to fetch fields from.
 			JSONArray obj = (JSONArray)JSONValue.parse(readResponse(connection));
-			
-			for(int i=0; i<10; i++) {
-				System.out.println(((JSONObject)obj.get(i)).keySet());
-			}
-				
-			if (obj != null) {
-				String tweet = ((JSONObject)obj.get(0)).get("text").toString();
-
-				return (tweet != null) ? tweet : "";
-			}
-			return new String();
+			System.out.println("TIMELINE SIZE: " + obj.size());
+			System.out.println("TIMELINE FIRST ENTRY: " + ((JSONObject)obj.get(0)).get("text"));
 		}
 		catch (MalformedURLException e) {
 			throw new IOException("Invalid endpoint URL specified.", e);
@@ -150,11 +173,14 @@ public class Crawler {
 
 	
 	public static void main(String[] args) {
-		String endPointUrl = "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=FAZ_Topnews&count=10";
-		String searchUrl = "https://api.twitter.com/1.1/search/tweets.json?q=%40twitterapi";
+		String twitterAccount = "FAZ_NET";
+		String endPointUrl = "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=" + twitterAccount + "&count=250";
+		String query = "Macht%20der%20Maschinen";
+		String searchUrl = "https://api.twitter.com/1.1/search/tweets.json?q=" + query + "&result_type=mixed&count=100";
 
 		try {
-			System.out.println(fetchTimelineTweet(endPointUrl));
+			fetchTimelineTweet(endPointUrl);
+			searchTwitter(searchUrl);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
