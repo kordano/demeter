@@ -1,4 +1,4 @@
-package demeter.twitter.worker;
+package demeter.worker;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
