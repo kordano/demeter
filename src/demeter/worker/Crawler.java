@@ -131,7 +131,7 @@ public class Crawler {
 	 * @return
 	 * @throws IOException
 	 */
-	private static JSONObject searchTwitter(String query) throws IOException {
+	public static JSONObject searchTwitter(String query) throws IOException {
 		HttpsURLConnection connection = null;
 		String bearerToken = requestBearerToken("https://api.twitter.com/oauth2/token");
 		String endPointUrl = "https://api.twitter.com/1.1/search/tweets.json?q=" + query + "&result_type=mixed&count=100";
@@ -168,7 +168,7 @@ public class Crawler {
 	 * @return list of tweets
 	 * @throws IOException
 	 */
-	private static JSONArray fetchTimelineTweet(String username) throws IOException {
+	public static JSONArray fetchTimelineTweet(String username) throws IOException {
 		HttpsURLConnection connection = null;
 		String bearerToken = requestBearerToken("https://api.twitter.com/oauth2/token");
 		String endPointUrl = "https://api.twitter.com/1.1/statuses/user_timeline.json?screen_name=" + username + "&count=200";
@@ -240,7 +240,7 @@ public class Crawler {
 	 * @param query String to be searched
 	 * @return first tweet which contains the string
 	 */
-	private static JSONObject findTweet(JSONArray timeline, String query) {
+	public static JSONObject findTweet(JSONArray timeline, String query) {
 		for(Object o: timeline) {
 			JSONObject tweet = (JSONObject)o;
 			if(((String)tweet.get("text")).contains(query)) {

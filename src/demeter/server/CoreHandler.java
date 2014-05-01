@@ -28,7 +28,6 @@ public class CoreHandler extends AbstractHandler{
 		_greeting = greeting;
 		_body = body;
 	}
-	
 	 
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		response.setContentType("text/html;charset=utf-8");
