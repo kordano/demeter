@@ -199,12 +199,12 @@ public class Crawler {
 	}
 	
 	/**
-	 * Get reteets for a given tweet
+	 * Get retweets for a given tweet id
 	 * @param id tweet-id
 	 * @return list of tweets
 	 * @throws IOException
 	 */
-	private static JSONArray fetchRetweets(Long id) throws IOException {
+	public static JSONArray fetchRetweets(Long id) throws IOException {
 		HttpsURLConnection connection = null;
 		String bearerToken = requestBearerToken("https://api.twitter.com/oauth2/token");
 		String endPointUrl = "https://api.twitter.com/1.1/statuses/retweets/"+ id +".json";
@@ -249,35 +249,4 @@ public class Crawler {
 		}
 		return new JSONObject();
 	}
-
-	
-	// Just playing around a little bit
-//	public static void main(String[] args) {
-//		String twitterAccount = "FAZ_Topnews";
-//		String query = "Netzneutralität:%20Was%20eine%20Überholspur%20im%20Internet%20für%20uns%20bedeutet";
-//		String query2 = "Macht%20der%20Maschinen";
-//		String query3 = "Deutsche%20Bank%20Elephant";
-//
-//		
-//		try {
-//			JSONArray fazTimeline = fetchTimelineTweet(twitterAccount);
-//			
-//			JSONObject result = findTweet(fazTimeline, "Netzneutralität");
-//			System.out.println(result.get("retweet_count"));
-//			
-//			
-//			JSONObject results = searchTwitter(query3);
-//			
-//			JSONArray tweets = (JSONArray)results.get("statuses");
-//			for(Object t: tweets) {
-//				JSONObject tweet = (JSONObject)t;
-//				System.out.println(((JSONObject)tweet.get("user")).get("screen_name") + ": " + tweet.get("text") +  " -> " + tweet.get("retweet_count"));
-//			}
-//			System.out.println("Tweets found: " + tweets.size());
-//			
-//			
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-//	}
 }
