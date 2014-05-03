@@ -8,12 +8,12 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 
 import javax.net.ssl.HttpsURLConnection;
 
 import org.apache.commons.codec.binary.Base64;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -134,7 +134,8 @@ public class Crawler {
 	public static JSONObject searchTwitter(String query) throws IOException {
 		HttpsURLConnection connection = null;
 		String bearerToken = requestBearerToken("https://api.twitter.com/oauth2/token");
-		String endPointUrl = "https://api.twitter.com/1.1/search/tweets.json?q=" + query + "&result_type=mixed&count=100";
+		String encoded = URLEncoder.encode(query, "UTF-8");
+		String endPointUrl = "https://api.twitter.com/1.1/search/tweets.json?q=" + encoded + "&result_type=mixed&count=100";
 					
 		try {
 			URL url = new URL(endPointUrl); 
@@ -234,19 +235,35 @@ public class Crawler {
 		}
 	}
 	
-	/**
-	 * Find all tweets in timeline which contains a given string
-	 * @param timeline Array of tweets from a user
-	 * @param query String to be searched
-	 * @return first tweet which contains the string
-	 */
-	public static JSONObject findTweet(JSONArray timeline, String query) {
-		for(Object o: timeline) {
-			JSONObject tweet = (JSONObject)o;
-			if(((String)tweet.get("text")).contains(query)) {
-				return tweet;
-			} 
+	public static JSONObject fetchTweet(Long id) throws IOException {
+		HttpsURLConnection connection = null;
+		String bearerToken = requestBearerToken("https://api.twitter.com/oauth2/token");
+		String endPointUrl = "https://api.twitter.com/1.1/statuses/show.json?id="+ id;
+					
+		try {
+			URL url = new URL(endPointUrl); 
+			connection = (HttpsURLConnection) url.openConnection();           
+			connection.setDoOutput(true);
+			connection.setDoInput(true); 
+			connection.setRequestMethod("GET"); 
+			connection.setRequestProperty("Host", "api.twitter.com");
+			connection.setRequestProperty("User-Agent", "News-Crawler");
+			connection.setRequestProperty("Authorization", "bearer " + bearerToken);
+			connection.setUseCaches(false);
+			
+			JSONObject tweet = (JSONObject)JSONValue.parse(readResponse(connection));
+			
+			return tweet;
 		}
-		return new JSONObject();
+		catch (MalformedURLException e) {
+			throw new IOException("Invalid endpoint URL specified.", e);
+		}
+		finally {
+			if (connection != null) {
+				connection.disconnect();
+			}
+		}
+		
 	}
+	
 }
