@@ -3,6 +3,8 @@ package demeter.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,26 +14,28 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import twitter4j.HashtagEntity;
+import twitter4j.Status;
+import twitter4j.URLEntity;
+import twitter4j.UserMentionEntity;
 import demeter.worker.Crawler;
 
 public class Compositer {
 	private static String indexPage = "resources/public/index.html";
-	private static JSONArray userTimeline = new JSONArray();
 	private static String currentUser = "";
 	private static File index;
+	private static Crawler crawler;
+	private static HashMap<String, Status> currentTimeline;
 
 	/**
 	 * Initialize timeline and load index page
 	 * @param username
 	 */
 	public Compositer(String username){
-		try {
-			userTimeline = Crawler.fetchTimelineTweet(username);
-			currentUser = username;
-			index = new File(indexPage);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		crawler = new Crawler();
+		currentUser = username;
+		index = new File(indexPage);
+		currentTimeline = new HashMap<String, Status>();
 	}
 	
 	/**
@@ -66,6 +70,11 @@ public class Compositer {
 	 * @throws IOException
 	 */
 	private void buildTimeline(Element mainView){
+		List<Status> timeline = crawler.fetchUserTimeline(currentUser);
+		for(Status s: timeline) {
+			if(!currentTimeline.containsKey(Long.toString(s.getId())))
+				currentTimeline.put(Long.toString(s.getId()), s);
+		}
 		Element timelineView = mainView.appendElement("div")
 				.addClass("col-md-4") 
 				.appendElement("div")
@@ -80,30 +89,32 @@ public class Compositer {
 				.appendElement("div")
 				.addClass("panel-body")
 				.appendElement("table")
-				.addClass("table table-striped");
+				.addClass("table table-striped timeline-body") ;
 		
-		for(Object t: userTimeline) {
+		for(Status status: timeline) {
 			Element tableRow = tweetList.appendElement("tr");
-			String tweet = ((JSONObject)t).get("text").toString();
-			String tweetID = ((JSONObject)t).get("id_str").toString();
 			tableRow
 			.appendElement("form")
 			.attr("action", "/detail")
 			.appendElement("td")
-			.text(tweet)
+			.text(status.getText())
 			.appendElement("td")
 			.appendElement("input")
 			.addClass("btn btn-defalut btn-xs")
 			.attr("type", "submit")
 			.attr("name", "tweetID")
-			.attr("value", tweetID);
+			.attr("value", Long.toString(status.getId()));
 		}
 	}
 	
-	
-	private String extractTextFromTweet(JSONObject tweet) {
+	/**
+	 * Extract the text before the url
+	 * @param tweet
+	 * @return
+	 */
+	private String extractText(String tweet) {
 		Pattern p = Pattern.compile("([\\w\\W\\d\\D\\s]+)(?=http://)");
-		Matcher m = p.matcher(tweet.get("text").toString());
+		Matcher m = p.matcher(tweet);
 		String result = "";
 		while(m.find()) {
 			result = m.group(0);
@@ -119,17 +130,11 @@ public class Compositer {
 	 * @throws NumberFormatException 
 	 */
 	private void buildDetail(Element mainView, String tweetID) throws NumberFormatException, IOException {
-		JSONObject tweet = Crawler.fetchTweet(Long.decode(tweetID));
-		ArrayList<String> relevantKeys = new ArrayList<String>();
-		relevantKeys.add("favorited");
-		relevantKeys.add("retweet_count");
-		relevantKeys.add("favorite_count");
-		
-		String tweetText = extractTextFromTweet(tweet);
-		JSONObject twitterSearch = Crawler.searchTwitter(tweetText);
+		Status currentStatus = currentTimeline.get(tweetID);
+		List<Status> statuses = crawler.search(extractText(currentStatus.getText()));
 		
 		Element detailView = mainView.appendElement("div")
-			.addClass("col-md-8")
+			.addClass("col-md-7")
 			.appendElement("div")
 			.addClass("panel panel-default");
 		
@@ -144,31 +149,36 @@ public class Compositer {
 				.appendElement("dl");
 		
 		detailList.appendElement("dt").text("text");
-		detailList.appendElement("dl").text(tweetText);
+		detailList.appendElement("dl").text(currentStatus.getText());
 		
 		detailList.appendElement("dt").text("hashtags");
 		Element hashtags = detailList.appendElement("dl");
 		
-		for(Object t: (JSONArray)((JSONObject)tweet.get("entities")).get("hashtags")) {
-			JSONObject tag = (JSONObject)t;
-			hashtags.appendText(tag.get("text").toString() + " ");
+		for(HashtagEntity hashtag: currentStatus.getHashtagEntities()) {
+			hashtags.appendText("#" + hashtag.getText() + " ");
 		}
-		
 		
 		detailList.appendElement("dt").text("url");
 		Element urls = detailList.appendElement("dl");
 		
-		for(Object u: (JSONArray)((JSONObject)tweet.get("entities")).get("urls")) {
-			String url = ((JSONObject)u).get("url").toString();
-			urls.appendElement("a").attr("href",url).text(url);
+		for(URLEntity url : currentStatus.getURLEntities()) {
+			urls.appendElement("a").attr("href",url.getURL()).text(url.getExpandedURL());
 		}
 		
-		for(String key: relevantKeys) {
-			detailList.appendElement("dt").text(key);
-			detailList.appendElement("dl").text(tweet.get(key).toString());
+		detailList.appendElement("dt").text("user mentions");
+		Element userMentions = detailList.appendElement("dl");
+		
+		for(UserMentionEntity userMention: currentStatus.getUserMentionEntities()) {
+			userMentions.appendText("@" + userMention.getText() + " ");
 		}
+		
+		detailList.appendElement("dt").text("retweet count");
+		detailList.appendElement("dl").text(Integer.toString(currentStatus.getRetweetCount()));
+		
+		detailList.appendElement("dt").text("favorite count");
+		detailList.appendElement("dl").text(Integer.toString(currentStatus.getFavoriteCount()));
 		
 		detailList.appendElement("dt").text("found statuses");
-		detailList.appendElement("dl").text((Integer.toString(((JSONArray)twitterSearch.get("statuses")).size())));
+		detailList.appendElement("dl").text(Integer.toString(statuses.size()));
 	}
 }
