@@ -26,39 +26,101 @@ public class Compositer {
 
 	/**
 	 * Initialize timeline and load index page
-	 * @param username
+	 * @param username twitter username
 	 */
-	public Compositer(String username){
+	public Compositer(){
 		crawler = new Crawler();
-		currentUser = username;
 		index = new File(indexPage);
 		currentTimeline = new HashMap<String, Status>();
 	}
 	
 	/**
-	 * Create timeline view
-	 * @return
+	 * Creates timeline view
+	 * @return mainpage html string
 	 * @throws IOException
 	 */
 	public String buildPage() throws IOException {
 		Document doc = Jsoup.parse(index, "UTF-8");
 		Element mainView = doc.body().appendElement("div").addClass("row");
-		buildTimeline(mainView);
+		Element timelineView = mainView.appendElement("div")
+				.addClass("col-md-4") 
+				.appendElement("div")
+				.addClass("panel panel-default");
+		buildHeading(timelineView);
+		return doc.toString();
+	}
+	
+	public String buildPage(String username) throws IOException {
+		currentUser = username;
+		Document doc = Jsoup.parse(index, "UTF-8");
+		Element mainView = doc.body().appendElement("div").addClass("row");
+		Element timelineView = mainView.appendElement("div")
+				.addClass("col-md-4") 
+				.appendElement("div")
+				.addClass("panel panel-default");
+		buildHeading(timelineView);
+		buildTimeline(timelineView);
 		return doc.toString();
 	}
 	
 	/**
-	 * Create and combine timeline and detail to overall view
+	 * Creates and combines timeline and detail to overall view
 	 * @param tweetID
 	 * @return
 	 * @throws IOException
 	 */
-	public String buildPage(String tweetID) throws IOException {
+	public String buildPage(String username,String tweetID) throws IOException {
+		currentUser = username;
 		Document doc = Jsoup.parse(index, "UTF-8");
 		Element mainView = doc.body().appendElement("div").addClass("row");
-		buildTimeline(mainView);
+		Element timelineView = mainView.appendElement("div")
+				.addClass("col-md-4") 
+				.appendElement("div")
+				.addClass("panel panel-default");
+		buildHeading(timelineView);
+		buildTimeline(timelineView);
 		buildDetail(mainView, tweetID);
 		return doc.toString();
+	}
+	
+	
+	private void buildHeading(Element timelineView) {
+		// create header and selection menu for twitter accounts
+		Element heading = timelineView.appendElement("div")
+		.addClass("panel-heading")
+		.appendElement("h3")
+		.text("Timeline: @" + currentUser);
+		
+		heading
+		.appendElement("form")
+		.attr("action", "/")
+		.appendElement("select")
+		.addClass("form-control")
+		.attr("name", "username")
+		.appendElement("option")
+		.text("FAZ_NET")
+		.val("FAZ_NET")
+		.appendElement("option")
+		.text("focusonline")
+		.val("focusonline")
+		.appendElement("option")
+		.text("SZ")
+		.val("SZ")
+		.appendElement("option")
+		.text("SPIEGELONLINE")
+		.val("SPIEGELONLINE")
+		.appendElement("option")
+		.text("BILD")
+		.val("BILD")
+		.appendElement("option")
+		.text("tazgezwitscher")
+		.val("tazgezwitscher")
+		.appendElement("option")
+		.text("WELT_News")
+		.val("WELT_News")
+		.appendElement("input")
+		.addClass("btn btn-primary")
+		.attr("type", "submit") ;
 	}
 	
 	/**
@@ -66,21 +128,14 @@ public class Compositer {
 	 * @return
 	 * @throws IOException
 	 */
-	private void buildTimeline(Element mainView){
+	private void buildTimeline(Element timelineView){
 		List<Status> timeline = crawler.fetchUserTimeline(currentUser);
+		
 		for(Status s: timeline) {
 			if(!currentTimeline.containsKey(Long.toString(s.getId())))
 				currentTimeline.put(Long.toString(s.getId()), s);
 		}
-		Element timelineView = mainView.appendElement("div")
-				.addClass("col-md-4") 
-				.appendElement("div")
-				.addClass("panel panel-default");
-		
-		timelineView.appendElement("div")
-		.addClass("panel-heading")
-		.appendElement("h3")
-		.text("Timeline: @" + currentUser);
+	
 		
 		Element tweetList = timelineView
 				.appendElement("div")
@@ -92,7 +147,11 @@ public class Compositer {
 			Element tableRow = tweetList.appendElement("tr");
 			tableRow
 			.appendElement("form")
-			.attr("action", "/detail")
+			.attr("action", "/")
+			.appendElement("input")
+			.attr("value", status.getUser().getScreenName())
+			.attr("name", "username")
+			.attr("type", "hidden")
 			.appendElement("td")
 			.text(status.getText())
 			.appendElement("td")
@@ -105,7 +164,7 @@ public class Compositer {
 	}
 	
 	/**
-	 * Extract the text before the url
+	 * Extracts the text before the url
 	 * @param tweet
 	 * @return
 	 */
@@ -120,7 +179,7 @@ public class Compositer {
 	}
 
 	/**
-	 * Build the detail view of a given tweet
+	 * Builds the detail view of a given tweet
 	 * @param mainView
 	 * @param tweetID
 	 * @throws IOException 
@@ -147,6 +206,9 @@ public class Compositer {
 		
 		detailList.appendElement("dt").text("text");
 		detailList.appendElement("dl").text(currentStatus.getText());
+		
+		detailList.appendElement("dt").text("time");
+		detailList.appendElement("dl").text(currentStatus.getCreatedAt().toString());
 		
 		detailList.appendElement("dt").text("hashtags");
 		Element hashtags = detailList.appendElement("dl");
@@ -175,7 +237,20 @@ public class Compositer {
 		detailList.appendElement("dt").text("favorite count");
 		detailList.appendElement("dl").text(Integer.toString(currentStatus.getFavoriteCount()));
 		
-		detailList.appendElement("dt").text("found statuses");
+		detailList.appendElement("dt").text("found statuses for " + extractText(currentStatus.getText()));
 		detailList.appendElement("dl").text(Integer.toString(statuses.size()));
+		
+		//Search for hashtags
+		String hashtagQuery = "";
+		
+		for(HashtagEntity hashtag : currentStatus.getHashtagEntities()) {
+			hashtagQuery = hashtagQuery + "#" + hashtag.getText() + " ";
+		}
+		
+		if(!hashtagQuery.equals("")) {
+			List<Status> hashtagStatuses = crawler.search(hashtagQuery);
+			detailList.appendElement("dt").text("found statuses for " + hashtagQuery);
+			detailList.appendElement("dl").text(Integer.toString(hashtagStatuses.size()));
+		}
 	}
 }

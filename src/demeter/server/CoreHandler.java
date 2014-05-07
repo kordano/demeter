@@ -16,9 +16,8 @@ public class CoreHandler extends AbstractHandler{
 		_body = null;
 	}
 	 
-	 
 	public CoreHandler(String username) {
-		compositer = new Compositer(username);
+		compositer = new Compositer();
 		_body = null;
 	}
 	 
@@ -26,8 +25,13 @@ public class CoreHandler extends AbstractHandler{
 		response.setContentType("text/html;charset=utf-8");
 		response.setStatus(HttpServletResponse.SC_OK);
 		baseRequest.setHandled(true);
-		if(request.getParameter("tweetID") != null) {
-			_body = compositer.buildPage(request.getParameter("tweetID"));
+		
+		if(request.getParameter("username") != null) {
+			if(request.getParameter("tweetID") != null) {
+				_body = compositer.buildPage(request.getParameter("username"),request.getParameter("tweetID"));
+			} else {
+				_body = compositer.buildPage(request.getParameter("username"));
+			}
 		} else {
 			_body = compositer.buildPage();
 		}
