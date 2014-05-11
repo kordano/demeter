@@ -18,7 +18,7 @@ import twitter4j.UserMentionEntity;
 import demeter.worker.Crawler;
 
 public class Compositer {
-	private static String indexPage = "resources/public/index.html";
+	private static String indexPage = "/var/www/demeter/index.html";
 	private static String currentUser = "";
 	private static File index;
 	private static Crawler crawler;
@@ -32,6 +32,8 @@ public class Compositer {
 		crawler = new Crawler();
 		index = new File(indexPage);
 		currentTimeline = new HashMap<String, Status>();
+		crawler.stream(new String[]{"@FAZ_NET","@tagesschau","@dpa","@SZ", "@SPIEGELONLINE"},
+				new long[]{114508061,18016521,5734902,40227292,2834511});
 	}
 	
 	/**
@@ -83,7 +85,10 @@ public class Compositer {
 		return doc.toString();
 	}
 	
-	
+	/**
+	 * Creates the heading of the timeline
+	 * @param timelineView timeline html element
+	 */
 	private void buildHeading(Element timelineView) {
 		// create header and selection menu for twitter accounts
 		Element heading = timelineView.appendElement("div")
@@ -101,8 +106,11 @@ public class Compositer {
 		.text("FAZ_NET")
 		.val("FAZ_NET")
 		.appendElement("option")
-		.text("focusonline")
-		.val("focusonline")
+		.text("dpa")
+		.val("dpa")
+		.appendElement("option")
+		.text("tagesschau")
+		.val("tagesschau")
 		.appendElement("option")
 		.text("SZ")
 		.val("SZ")
@@ -110,14 +118,8 @@ public class Compositer {
 		.text("SPIEGELONLINE")
 		.val("SPIEGELONLINE")
 		.appendElement("option")
-		.text("BILD")
-		.val("BILD")
-		.appendElement("option")
 		.text("tazgezwitscher")
 		.val("tazgezwitscher")
-		.appendElement("option")
-		.text("WELT_News")
-		.val("WELT_News")
 		.appendElement("input")
 		.addClass("btn btn-primary")
 		.attr("type", "submit") ;
