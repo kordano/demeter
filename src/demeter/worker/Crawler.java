@@ -22,6 +22,7 @@ import twitter4j.StatusDeletionNotice;
 public class Crawler {
 	private static Twitter twitter;
 	private static TwitterStream twitterStream;
+	private static Curator curator;
 	
 	/**
 	 * Initialize twitter4j
@@ -32,7 +33,7 @@ public class Crawler {
 		  .setOAuthConsumerKey("RfwfMlqMXqWnIofQ8QjU5TpSX")
 		  .setOAuthConsumerSecret("tXF0cJM0ltTyMw1363cNWAkflbgzg0LBeFrutFer7E9ksSZaJz")
 		  .setOAuthAccessToken("108654757-1jR2QjJj3gZINhT7aTdQGKX0pKf3yIKyQGSu322w")
-		  .setOAuthAccessTokenSecret("nbEkOMtOM6Ped8xozXHo6j2sI82k1uH1yOyZPMzuoOcng");
+		  .setOAuthAccessTokenSecret("nbEkOMtOM6Ped8xozXHo6j2sI82k1uH1yOyZPMzuoOcng") ;
 		TwitterFactory tf = new TwitterFactory(cb.build());
 		twitter = tf.getInstance();
 		ConfigurationBuilder scb = new ConfigurationBuilder();
@@ -40,8 +41,10 @@ public class Crawler {
 		  .setOAuthConsumerKey("RfwfMlqMXqWnIofQ8QjU5TpSX")
 		  .setOAuthConsumerSecret("tXF0cJM0ltTyMw1363cNWAkflbgzg0LBeFrutFer7E9ksSZaJz")
 		  .setOAuthAccessToken("108654757-1jR2QjJj3gZINhT7aTdQGKX0pKf3yIKyQGSu322w")
-		  .setOAuthAccessTokenSecret("nbEkOMtOM6Ped8xozXHo6j2sI82k1uH1yOyZPMzuoOcng");
+		  .setOAuthAccessTokenSecret("nbEkOMtOM6Ped8xozXHo6j2sI82k1uH1yOyZPMzuoOcng")
+		  .setJSONStoreEnabled(true);
 		twitterStream = new TwitterStreamFactory(scb.build()).getInstance();
+		curator = new Curator();
 	}
 	
 	/**
@@ -81,6 +84,7 @@ public class Crawler {
 
 	        public void onStatus(Status status) {
 	            System.out.println("@" + status.getUser().getScreenName() + " - " + status.getText());
+	            curator.storeTweet(status);
 	        }
 
 	        public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
