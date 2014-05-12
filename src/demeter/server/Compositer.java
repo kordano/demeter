@@ -32,8 +32,6 @@ public class Compositer {
 		crawler = new Crawler();
 		index = new File(indexPage);
 		currentTimeline = new HashMap<String, Status>();
-		crawler.stream(new String[]{"@FAZ_NET","@tagesschau","@dpa","@SZ", "@SPIEGELONLINE"},
-				new long[]{114508061,18016521,5734902,40227292,2834511});
 	}
 	
 	/**

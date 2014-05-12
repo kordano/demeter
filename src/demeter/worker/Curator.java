@@ -1,18 +1,11 @@
 package demeter.worker;
 
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 
-import twitter4j.HashtagEntity;
 import twitter4j.Status;
 import twitter4j.TwitterObjectFactory;
-import twitter4j.URLEntity;
-
-import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.util.JSON;

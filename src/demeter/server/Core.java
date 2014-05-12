@@ -1,20 +1,11 @@
 package demeter.server;
 
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import demeter.worker.Crawler;
 
 public class Core {
 	public static void main(String[] args) throws Exception {
-        Server server = new Server(8083);
-        ContextHandler context = new ContextHandler("/");
-        context.setContextPath("/");
-        context.setHandler(new CoreHandler("FAZ_NET"));
-        ContextHandlerCollection contexts = new ContextHandlerCollection();
-        contexts.setHandlers(new Handler[] { context});
-        server.setHandler(contexts);
-        server.start();
-        server.join();
+		Crawler crawler = new Crawler();
+		crawler.stream(new String[]{"@FAZ_NET","@tagesschau","@dpa","@SZ", "@SPIEGELONLINE"},
+				new long[]{114508061,18016521,5734902,40227292,2834511});
     }
 }
