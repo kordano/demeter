@@ -3,7 +3,6 @@ package demeter.worker;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import twitter4j.FilterQuery;
 import twitter4j.Paging;
 import twitter4j.Query;
@@ -14,6 +13,7 @@ import twitter4j.StatusListener;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
+import twitter4j.TwitterObjectFactory;
 import twitter4j.TwitterStream;
 import twitter4j.TwitterStreamFactory;
 import twitter4j.conf.ConfigurationBuilder;
@@ -28,6 +28,9 @@ public class Crawler {
 	 * Initialize twitter4j
 	 */
 	public Crawler() {
+		curator = new Curator();
+		
+		/* initialize twitter REST API Object */
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		cb.setDebugEnabled(true)
 		  .setOAuthConsumerKey("RfwfMlqMXqWnIofQ8QjU5TpSX")
@@ -36,6 +39,8 @@ public class Crawler {
 		  .setOAuthAccessTokenSecret("nbEkOMtOM6Ped8xozXHo6j2sI82k1uH1yOyZPMzuoOcng") ;
 		TwitterFactory tf = new TwitterFactory(cb.build());
 		twitter = tf.getInstance();
+		
+		/* initialize twitter Streaming API Object */
 		ConfigurationBuilder scb = new ConfigurationBuilder();
 		scb.setDebugEnabled(true)
 		  .setOAuthConsumerKey("RfwfMlqMXqWnIofQ8QjU5TpSX")
@@ -43,8 +48,8 @@ public class Crawler {
 		  .setOAuthAccessToken("108654757-1jR2QjJj3gZINhT7aTdQGKX0pKf3yIKyQGSu322w")
 		  .setOAuthAccessTokenSecret("nbEkOMtOM6Ped8xozXHo6j2sI82k1uH1yOyZPMzuoOcng")
 		  .setJSONStoreEnabled(true);
+		
 		twitterStream = new TwitterStreamFactory(scb.build()).getInstance();
-		curator = new Curator();
 	}
 	
 	/**
@@ -83,8 +88,8 @@ public class Crawler {
 	    StatusListener listener = new StatusListener() {
 
 	        public void onStatus(Status status) {
-	            System.out.println("@" + status.getUser().getScreenName() + " - " + status.getText());
-	            curator.storeTweet(status);
+	        	System.out.println("[" + status.getCreatedAt() + "] Storing " + status.getId() + " from " + status.getUser().getId());
+	        	curator.storeTweet(status);
 	        }
 
 	        public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
